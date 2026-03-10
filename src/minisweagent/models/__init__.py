@@ -86,6 +86,7 @@ _MODEL_CLASS_MAPPING = {
     "portkey_response": "minisweagent.models.portkey_response_model.PortkeyResponseAPIModel",
     "requesty": "minisweagent.models.requesty_model.RequestyModel",
     "openai": "minisweagent.models.openai_model.OpenAIModel",
+    "openai_textbased": "minisweagent.models.openai_textbased_model.OpenAITextbasedModel",
     "deterministic": "minisweagent.models.test_models.DeterministicModel",
 }
 
