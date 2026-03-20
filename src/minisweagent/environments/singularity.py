@@ -32,6 +32,8 @@ class SingularityEnvironmentConfig(BaseModel):
     """Global arguments passed before the subcommand (e.g., --quiet, --debug)."""
     exec_args: list[str] = ["--contain", "--cleanenv", "--fakeroot"]
     """Arguments passed to `singularity exec`."""
+    writable_tmpfs: bool = False
+    """Use --writable-tmpfs instead of a sandbox directory."""
 
 
 class SingularityEnvironment:
@@ -44,6 +46,8 @@ class SingularityEnvironment:
         self.sandbox_dir = self._build_sandbox()
 
     def _build_sandbox(self) -> Path:
+        if self.config.writable_tmpfs:
+            return Path(self.config.image)  # no-op; image used directly
         # Building the sandbox can fail (very rarely), so we retry it
         max_retries = self.config.sandbox_build_retries
         for attempt in range(max_retries):
@@ -92,7 +96,10 @@ class SingularityEnvironment:
         for key, value in self.config.env.items():
             cmd.extend(["--env", f"{key}={value}"])
 
-        cmd.extend(["--writable", str(self.sandbox_dir), "bash", "-c", command])
+        if self.config.writable_tmpfs:
+            cmd.extend(["--writable-tmpfs", str(self.config.image), "bash", "-c", command])
+        else:
+            cmd.extend(["--writable", str(self.sandbox_dir), "bash", "-c", command])
         try:
             result = subprocess.run(
                 cmd,
@@ -132,7 +139,8 @@ class SingularityEnvironment:
             )
 
     def cleanup(self):
-        shutil.rmtree(self.sandbox_dir, ignore_errors=True)
+        if not self.config.writable_tmpfs:
+            shutil.rmtree(self.sandbox_dir, ignore_errors=True)
 
     def __del__(self):
         """Cleanup sandbox when object is destroyed."""
