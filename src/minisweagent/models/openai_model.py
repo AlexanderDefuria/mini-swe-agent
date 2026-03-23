@@ -26,6 +26,8 @@ class OpenAIModelConfig(BaseModel):
     """API key (use 'none' for local servers that don't require auth)"""
     seed: int | None = None
     """Random seed for deterministic generation (e.g. with llama.cpp). Omitted from request if None."""
+    temperature: float | None = None
+    """Sampling temperature for text generation (e.g. llama-server). Omitted from request if None."""
     model_kwargs: dict[str, Any] = {}
     format_error_template: str = "{{ error }}"
     observation_template: str = (
@@ -61,6 +63,8 @@ class OpenAIModel:
         extra_kwargs = {}
         if self.config.seed is not None:
             extra_kwargs["seed"] = self.config.seed
+        if self.config.temperature is not None:
+            extra_kwargs["temperature"] = self.config.temperature
         return self.client.chat.completions.create(
             model=self.config.model_name,
             messages=messages,
